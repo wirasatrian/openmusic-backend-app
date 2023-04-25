@@ -36,10 +36,12 @@ exports.up = pgm => {
       notNull: true
     },
     duration: {
-      type: 'INTEGER'
+      type: 'INTEGER',
+      notNull: false
     },
     albumId: {
       type: 'TEXT',
+      notNull: false,
       references: '"albums"',
       onDelete: 'cascade'
     }
