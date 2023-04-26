@@ -1,3 +1,4 @@
+/* eslint-disable no-template-curly-in-string */
 const { Pool } = require('pg')
 const { nanoid } = require('nanoid')
 const InvariantError = require('../exceptions/InvariantError')
@@ -26,29 +27,28 @@ class SongsService {
     return result.rows[0].id
   }
 
-  async getSongs ({ title, performer }) {
+  async getSongs ({ title, performer, albumId }) {
     let query
-    let modifyTitle
-    let modifyPerformer
 
     if (title && performer) {
-      modifyTitle = '%' + title + '%'
-      modifyPerformer = '%' + performer + '%'
       query = {
         text: 'SELECT * FROM songs WHERE LOWER(title) like $1 AND LOWER(performer) like $2',
-        values: [modifyTitle, modifyPerformer]
+        values: [`%${title}%`, `%${performer}%`]
       }
     } else if (title) {
-      modifyTitle = '%' + title + '%'
       query = {
         text: 'SELECT * FROM songs WHERE LOWER(title) like $1',
-        values: [modifyTitle]
+        values: [`%${title}%`]
       }
     } else if (performer) {
-      modifyPerformer = '%' + performer + '%'
       query = {
         text: 'SELECT * FROM songs WHERE LOWER(performer) like $1',
-        values: [modifyPerformer]
+        values: [`%${performer}%`]
+      }
+    } else if (albumId) {
+      query = {
+        text: 'SELECT * FROM songs WHERE album_id = $1',
+        values: [albumId]
       }
     } else {
       query = {
@@ -68,7 +68,7 @@ class SongsService {
 
     const result = await this._pool.query(query)
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Lagu tidak ditemukan')
     }
 
@@ -97,7 +97,7 @@ class SongsService {
 
     const result = await this._pool.query(query)
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Gagal memperbarui lagu. Id lagu tidak ditemukan')
     }
   }
@@ -110,7 +110,7 @@ class SongsService {
 
     const result = await this._pool.query(query)
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Gagal menghapus lagu. Id lagu tidak ditemukan')
     }
   }

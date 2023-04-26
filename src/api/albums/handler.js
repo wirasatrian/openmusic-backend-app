@@ -1,4 +1,5 @@
 const autoBind = require('auto-bind')
+const SongsService = require('../../services/SongsService')
 class AlbumsHandler {
   constructor (service, validator) {
     this._service = service
@@ -25,14 +26,23 @@ class AlbumsHandler {
   }
 
   async getAlbumByIdHandler (request, h) {
+    const songsService = new SongsService()
+
     const { id } = request.params
 
     const album = await this._service.getAlbumById(id)
 
+    const songs = await songsService.getSongs({ albumId: id })
+
+    const partOfSongs = songs.map(({ id, title, performer }) => ({ id, title, performer }))
+
     return {
       status: 'success',
       data: {
-        album
+        album: {
+          ...album,
+          songs: partOfSongs
+        }
       }
     }
   }

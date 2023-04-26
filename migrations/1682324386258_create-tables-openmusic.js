@@ -1,7 +1,5 @@
 /* eslint-disable camelcase */
 
-exports.shorthands = undefined
-
 exports.shorthands = { id: { type: 'VARCHAR(50)', primaryKey: true } }
 
 exports.up = pgm => {
