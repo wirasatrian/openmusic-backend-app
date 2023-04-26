@@ -26,7 +26,8 @@ class AlbumsService {
   }
 
   async getAlbumById (id) {
-    const query = {
+    let query
+    query = {
       text: 'SELECT * FROM albums WHERE id = $1',
       values: [id]
     }
@@ -37,7 +38,20 @@ class AlbumsService {
       throw new NotFoundError('Album tidak ditemukan')
     }
 
-    return result.rows[0]
+    const album = result.rows[0]
+
+    query = {
+      text: 'SELECT * FROM songs WHERE album_id = $1',
+      values: [album.id]
+    }
+
+    const songs = await this._pool.query(query)
+
+    const partOfSongs = songs.rows.map(({ id, title, performer }) => ({ id, title, performer }))
+    return {
+      ...album,
+      songs: partOfSongs
+    }
   }
 
   async editAlbumById (id, { name, year }) {

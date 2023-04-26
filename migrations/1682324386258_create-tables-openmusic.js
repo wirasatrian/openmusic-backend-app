@@ -33,21 +33,20 @@ exports.up = pgm => {
     },
     performer: {
       type: 'TEXT',
+
       notNull: true
     },
     duration: {
-      type: 'INTEGER',
-      notNull: false
+      type: 'INTEGER'
     },
-    albumId: {
+    album_id: {
       type: 'TEXT',
-      notNull: false,
       references: '"albums"',
       onDelete: 'cascade'
     }
   })
 
-  pgm.createIndex('songs', 'albumId')
+  pgm.createIndex('songs', 'album_id')
 }
 
 exports.down = pgm => {
