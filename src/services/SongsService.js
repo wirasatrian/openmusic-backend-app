@@ -129,7 +129,6 @@ class SongsService {
     };
 
     const result = await this._pool.query(query);
-    console.log(result.rows[0]);
 
     if (!result.rowCount) {
       throw new NotFoundError('Lagu tidak ditemukan');
