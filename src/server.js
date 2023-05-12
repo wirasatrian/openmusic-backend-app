@@ -1,4 +1,5 @@
 require('dotenv').config();
+const config = require('./utils/config.js');
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
 const albums = require('./api/albums');
@@ -27,17 +28,27 @@ const PlaylistsValidator = require('./validator/playlists');
 const collaborations = require('./api/collaborations');
 const CollaborationsService = require('./services/CollaborationsService');
 const CollaborationsValidator = require('./validator/collaborations');
+
+const _exports = require('./api/exports');
+const ProducerService = require('./services/rabbitmq/ProducerService');
+const ExportsValidator = require('./validator/exports');
+
+const S3StorageService = require('./services/S3StorageService');
+const CacheService = require('./services/redis/CacheService');
+
 const init = async () => {
+  const usersService = new UsersService();
+  const cacheService = new CacheService();
+  const albumsService = new AlbumsService(cacheService);
   const collaborationsService = new CollaborationsService();
   const playlistsService = new PlaylistsService(collaborationsService);
-  const albumsService = new AlbumsService();
   const songsService = new SongsService();
-  const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
+  const s3StorageService = new S3StorageService();
 
   const server = Hapi.server({
-    port: process.env.PORT,
-    host: process.env.HOST,
+    port: config.app.port,
+    host: config.app.host,
     routes: {
       cors: {
         origin: ['*'],
@@ -71,7 +82,9 @@ const init = async () => {
     {
       plugin: albums,
       options: {
-        service: albumsService,
+        albumsService,
+        songsService,
+        s3StorageService,
         validator: AlbumsValidator,
       },
     },
@@ -113,6 +126,14 @@ const init = async () => {
         playlistsService,
         usersService,
         validator: CollaborationsValidator,
+      },
+    },
+    {
+      plugin: _exports,
+      options: {
+        ProducerService,
+        playlistsService,
+        validator: ExportsValidator,
       },
     },
   ]);

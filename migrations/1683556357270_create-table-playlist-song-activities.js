@@ -1,7 +1,3 @@
-/* eslint-disable camelcase */
-
-/* eslint-disable camelcase */
-
 exports.up = (pgm) => {
   pgm.createTable('playlist_song_activities', {
     id: {

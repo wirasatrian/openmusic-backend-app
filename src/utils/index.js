@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 const mapSongToModel = ({
   id,
   title,
@@ -25,4 +23,11 @@ const mapUserToModel = ({ user_id, username, password, fullname }) => ({
   fullname,
 });
 
-module.exports = { mapSongToModel, mapUserToModel };
+const mapAlbumToModel = ({ id, name, year, cover_url }) => ({
+  id,
+  name,
+  year,
+  coverUrl: cover_url,
+});
+
+module.exports = { mapSongToModel, mapUserToModel, mapAlbumToModel };
