@@ -4,10 +4,12 @@ const { nanoid } = require('nanoid');
 const InvariantError = require('../exceptions/InvariantError');
 const NotFoundError = require('../exceptions/NotFoundError');
 const { mapSongToModel } = require('../utils');
+const playlists = require('../api/playlists');
 
 class SongsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addSong({ title, year, genre, performer, duration, albumId }) {
@@ -51,10 +53,45 @@ class SongsService {
         values: [albumId],
       };
     } else if (playlistId) {
-      query = {
-        text: 'SELECT * FROM songs WHERE id IN (SELECT song_id FROM playlist_songs WHERE playlist_id = $1)',
-        values: [playlistId],
-      };
+      try {
+        const cacheResponse = await this._cacheService.get(
+          `playlist:${playlistId}`
+        );
+
+        if (cacheResponse) {
+          const parseCacheResponse = JSON.parse(cacheResponse);
+
+          const customResponse = {
+            playlistSongs: parseCacheResponse.playlistSongs,
+            cache: true,
+          };
+
+          await this._cacheService.set(
+            `playlist:${playlistId}`,
+            JSON.stringify(customResponse)
+          );
+          return customResponse;
+        }
+      } catch (error) {
+        query = {
+          text: 'SELECT * FROM songs WHERE id IN (SELECT song_id FROM playlist_songs WHERE playlist_id = $1)',
+          values: [playlistId],
+        };
+
+        const result = await this._pool.query(query);
+        const playlistSongs = result.rows.map(mapSongToModel);
+
+        const customResponse = {
+          playlistSongs: playlistSongs,
+          cache: false,
+        };
+
+        await this._cacheService.set(
+          `playlist:${playlistId}`,
+          JSON.stringify(customResponse)
+        );
+        return customResponse;
+      }
     } else {
       query = {
         text: 'SELECT * FROM songs',
@@ -62,6 +99,7 @@ class SongsService {
     }
 
     const result = await this._pool.query(query);
+
     return result.rows.map(mapSongToModel);
   }
 

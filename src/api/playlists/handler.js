@@ -106,7 +106,7 @@ class PlaylistsHandler {
 
     const playlist = await this._playlistsService.getPlaylistById(playlistId);
 
-    const playlistSongs = await this._songsService.getSongs({
+    const { playlistSongs, cache } = await this._songsService.getSongs({
       playlistId: `${playlistId}`,
     });
 
@@ -116,12 +116,16 @@ class PlaylistsHandler {
       performer,
     }));
 
-    return {
+    const response = h.response({
       status: 'success',
       data: {
-        playlist: { ...playlist, songs: songs },
+        playlist: { ...playlist, songs },
       },
-    };
+    });
+    if (cache) {
+      response.header('X-Data-Source', 'cache');
+    }
+    return response;
   }
 
   async deletePlaylistSongHandler(request, h) {
